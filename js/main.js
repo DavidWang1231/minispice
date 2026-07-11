@@ -7,9 +7,11 @@
  * marshalling here means editor and engine stay import-independent.
  */
 
-import { SchematicEditor } from "./editor/schematic.js";
+import { SchematicEditor, PROBE_COLORS } from "./editor/schematic.js";
 import { parseValue, formatValue } from "./editor/components.js";
 import { dcOperatingPoint } from "./engine/dc.js";
+import { transientAnalysis } from "./engine/transient.js";
+import { WaveformPlot } from "./plot/waveform.js";
 
 /* ---------------- status bar ---------------- */
 
@@ -77,16 +79,80 @@ document.getElementById("btn-dc").addEventListener("click", () => {
   }
 });
 
-/* ---------------- transient & AC (wired in M3/M4) ---------------- */
+/* ---------------- probes → traces ---------------- */
+
+/**
+ * Resolve the editor's probes to node numbers. Probes sitting on ground
+ * or on nothing are skipped (with a status warning) rather than fatal.
+ */
+function resolveProbes(nodeOfPoint) {
+  const probes = [];
+  editor.probes.forEach((p, i) => {
+    const node = nodeOfPoint.get(`${p.x},${p.y}`);
+    if (node === undefined || node === 0) {
+      setStatus(`Probe P${i + 1} is not on a live node — skipped.`, true);
+      return;
+    }
+    probes.push({ label: `P${i + 1}`, node, color: PROBE_COLORS[i % PROBE_COLORS.length] });
+  });
+  return probes;
+}
+
+/* ---------------- plot panel ---------------- */
+
+const plotPanel = document.getElementById("plot-panel");
+const plot = new WaveformPlot(document.getElementById("plot"));
+let bode = null; // created lazily in M4 (shares the canvas slot)
+
+function showPlot(title) {
+  document.getElementById("plot-title").textContent = title;
+  plotPanel.hidden = false;
+  plot.resize(); // the canvas was 0×0 while hidden
+}
+
+document.getElementById("btn-close-plot").addEventListener("click", () => {
+  plotPanel.hidden = true;
+});
+
+/* ---------------- run transient ---------------- */
 
 document.getElementById("btn-tran").addEventListener("click", () => {
-  setStatus("Transient analysis lands in milestone 3.", true);
+  const { netlist, nodeOfPoint, warnings } = editor.extract();
+  if (warnings.length) return setStatus(warnings.join(" "), true);
+
+  const probes = resolveProbes(nodeOfPoint);
+  if (probes.length === 0) {
+    return setStatus("Add a voltage probe (PROBE tool) to choose what to plot.", true);
+  }
+
+  const tStop = parseValue(document.getElementById("tran-tstop").value);
+  const dtRaw = document.getElementById("tran-dt").value.trim();
+  const dt = dtRaw ? parseValue(dtRaw) : tStop / 1000;
+  if (Number.isNaN(tStop) || Number.isNaN(dt)) {
+    return setStatus("Transient: can't parse stop time / time step.", true);
+  }
+  const method = document.getElementById("tran-method").value;
+
+  try {
+    const t0 = performance.now();
+    const { t, voltages } = transientAnalysis(netlist, { tStop, dt, method });
+    const ms = (performance.now() - t0).toFixed(0);
+    showPlot(`Transient — ${method === "trap" ? "trapezoidal" : "backward Euler"}, ${t.length - 1} steps`);
+    plot.setData(
+      t,
+      probes.map((p) => ({ label: p.label, color: p.color, data: voltages[p.node] })),
+      { xUnit: "s", yUnit: "V" }
+    );
+    setStatus(`Transient solved in ${ms} ms.`);
+  } catch (err) {
+    setStatus(err.message, true);
+  }
 });
+
+/* ---------------- run AC (wired in M4) ---------------- */
+
 document.getElementById("btn-ac").addEventListener("click", () => {
   setStatus("AC sweep lands in milestone 4.", true);
-});
-document.getElementById("btn-close-plot").addEventListener("click", () => {
-  document.getElementById("plot-panel").hidden = true;
 });
 
 /* ---------------- save / load / clear ---------------- */
@@ -142,7 +208,7 @@ exampleSelect.addEventListener("change", async () => {
 
 /** The preset list is static — GitHub Pages can't list directories.
  *  Names must match files in examples/. */
-const EXAMPLES = ["voltage-divider"];
+const EXAMPLES = ["voltage-divider", "rc-lowpass"];
 for (const n of EXAMPLES) {
   const opt = document.createElement("option");
   opt.value = n;
@@ -152,8 +218,8 @@ for (const n of EXAMPLES) {
 
 /* ---------------- shareable URLs ---------------- */
 
-// ?load=<preset-name> opens a preset directly; &run=dc solves it on load.
-// Handy for sharing links ("look at this circuit") and for screenshots.
+// ?load=<preset-name> opens a preset directly; &run=dc|tran|ac also solves
+// it on load. Handy for sharing links ("look at this circuit").
 const params = new URLSearchParams(location.search);
 if (params.get("load")) {
   (async () => {
@@ -161,7 +227,8 @@ if (params.get("load")) {
       const resp = await fetch(`examples/${params.get("load")}.json`);
       editor.loadState(await resp.json());
       setStatus(`Loaded preset: ${params.get("load")}.`);
-      if (params.get("run") === "dc") document.getElementById("btn-dc").click();
+      const runBtn = { dc: "btn-dc", tran: "btn-tran", ac: "btn-ac" }[params.get("run")];
+      if (runBtn) document.getElementById(runBtn).click();
     } catch (err) {
       setStatus(`Could not load preset: ${err.message}`, true);
     }

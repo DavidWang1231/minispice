@@ -28,6 +28,10 @@ import {
 } from "./components.js";
 import { extractNetlist } from "./netlist.js";
 
+/** Probe trace colors — exported so plots color traces identically to the
+ *  probe markers on the schematic (probe i ↔ color i). */
+export const PROBE_COLORS = ["#7ddf9a", "#5ab8ff", "#ff9de2", "#ffd166", "#9d8cff", "#4dd8c0"];
+
 /* PCB palette (mirrors css/style.css custom properties) */
 const STYLE = {
   board: "#0a3d2c",
@@ -37,7 +41,7 @@ const STYLE = {
   accent: "#d4af37",  // ENIG gold
   silk: "#d8e6de",
   error: "#ff6b6b",
-  probeColors: ["#7ddf9a", "#5ab8ff", "#ff9de2", "#ffd166", "#9d8cff", "#4dd8c0"],
+  probeColors: PROBE_COLORS,
 };
 
 const snap = (v) => Math.round(v / GRID) * GRID;
