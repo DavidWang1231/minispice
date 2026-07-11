@@ -16,7 +16,6 @@ dependencies** — vanilla HTML/CSS/JS, deployable to GitHub Pages as-is.
 ## Try it
 
 **Live:** https://davidwang1231.github.io/minispice/
-<!-- TODO(david): enable GitHub Pages (Settings → Pages → main branch, / root) -->
 
 **Locally:** ES modules don't load from `file://`, so serve the repo over
 HTTP and open http://localhost:8000:
