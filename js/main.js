@@ -23,6 +23,12 @@ function setStatus(msg, isError = false) {
   statusEl.className = isError ? "error" : "";
 }
 
+// Last-resort net: anything unexpected surfaces in the status bar instead
+// of dying silently in the console.
+window.addEventListener("error", (e) => setStatus(`Unexpected error: ${e.message}`, true));
+window.addEventListener("unhandledrejection", (e) =>
+  setStatus(`Unexpected error: ${e.reason?.message ?? e.reason}`, true));
+
 /* ---------------- editor ---------------- */
 
 const editor = new SchematicEditor(document.getElementById("schematic"), {
@@ -248,7 +254,10 @@ exampleSelect.addEventListener("change", async () => {
 
 /** The preset list is static — GitHub Pages can't list directories.
  *  Names must match files in examples/. */
-const EXAMPLES = ["voltage-divider", "rc-lowpass"];
+const EXAMPLES = [
+  "voltage-divider", "rc-lowpass", "series-rlc",
+  "inverting-opamp", "sallen-key-lowpass",
+];
 for (const n of EXAMPLES) {
   const opt = document.createElement("option");
   opt.value = n;

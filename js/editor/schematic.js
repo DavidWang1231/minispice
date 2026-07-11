@@ -537,15 +537,24 @@ export class SchematicEditor {
         ctx.stroke();
       }
 
-      // silkscreen labels (never rotated — text stays readable)
+      // silkscreen labels (never rotated — text stays readable).
+      // Horizontal parts: label above, centered. Vertical parts: label to
+      // the left of the body so it can't collide with pins or wires.
       if (c.type !== "GND") {
         ctx.font = "11px ui-monospace, Menlo, monospace";
-        ctx.textAlign = "center";
-        ctx.fillStyle = STYLE.silk;
-        const labelY = c.rotation % 180 === 0 ? c.pos.y - 18 : c.pos.y - 48;
-        ctx.fillText(c.id, c.pos.x, labelY);
-        ctx.fillStyle = STYLE.accent;
-        ctx.fillText(def.summary(c), c.pos.x, labelY + 12);
+        if (c.rotation % 180 === 0) {
+          ctx.textAlign = "center";
+          ctx.fillStyle = STYLE.silk;
+          ctx.fillText(c.id, c.pos.x, c.pos.y - 18);
+          ctx.fillStyle = STYLE.accent;
+          ctx.fillText(def.summary(c), c.pos.x, c.pos.y + 24);
+        } else {
+          ctx.textAlign = "right";
+          ctx.fillStyle = STYLE.silk;
+          ctx.fillText(c.id, c.pos.x - 22, c.pos.y - 2);
+          ctx.fillStyle = STYLE.accent;
+          ctx.fillText(def.summary(c), c.pos.x - 22, c.pos.y + 10);
+        }
       }
     }
 

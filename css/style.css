@@ -43,6 +43,10 @@ header h1 { font-size: 1.3rem; letter-spacing: 0.05em; color: var(--copper); }
 header .gold { color: var(--gold); }
 header .tagline { color: var(--silk); opacity: 0.6; font-size: 0.78rem; }
 
+.header-links { margin-left: auto; display: flex; gap: 1rem; }
+.header-links a { color: var(--copper-bright); font-size: 0.78rem; text-decoration: none; }
+.header-links a:hover { color: var(--gold); text-decoration: underline; }
+
 /* ---------------- layout ---------------- */
 
 main {
@@ -137,6 +141,8 @@ main {
   font-size: 0.75rem;
   color: var(--silk);
 }
+
+.panel select { min-width: 130px; }
 
 .panel input, .panel select {
   width: 100px;
