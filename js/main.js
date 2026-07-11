@@ -11,7 +11,9 @@ import { SchematicEditor, PROBE_COLORS } from "./editor/schematic.js";
 import { parseValue, formatValue } from "./editor/components.js";
 import { dcOperatingPoint } from "./engine/dc.js";
 import { transientAnalysis } from "./engine/transient.js";
+import { acSweep } from "./engine/ac.js";
 import { WaveformPlot } from "./plot/waveform.js";
+import { BodePlot } from "./plot/bode.js";
 
 /* ---------------- status bar ---------------- */
 
@@ -101,13 +103,18 @@ function resolveProbes(nodeOfPoint) {
 /* ---------------- plot panel ---------------- */
 
 const plotPanel = document.getElementById("plot-panel");
-const plot = new WaveformPlot(document.getElementById("plot"));
-let bode = null; // created lazily in M4 (shares the canvas slot)
+const plotCanvas = document.getElementById("plot");
+const bodeCanvas = document.getElementById("plot-bode");
+const plot = new WaveformPlot(plotCanvas);
+const bode = new BodePlot(bodeCanvas);
 
-function showPlot(title) {
+/** Show the plot panel with either the waveform or the bode canvas. */
+function showPlot(title, kind = "waveform") {
   document.getElementById("plot-title").textContent = title;
   plotPanel.hidden = false;
-  plot.resize(); // the canvas was 0×0 while hidden
+  plotCanvas.hidden = kind !== "waveform";
+  bodeCanvas.hidden = kind !== "bode";
+  (kind === "bode" ? bode : plot).resize(); // canvas was 0×0 while hidden
 }
 
 document.getElementById("btn-close-plot").addEventListener("click", () => {
@@ -149,10 +156,43 @@ document.getElementById("btn-tran").addEventListener("click", () => {
   }
 });
 
-/* ---------------- run AC (wired in M4) ---------------- */
+/* ---------------- run AC ---------------- */
 
 document.getElementById("btn-ac").addEventListener("click", () => {
-  setStatus("AC sweep lands in milestone 4.", true);
+  const { netlist, nodeOfPoint, warnings } = editor.extract();
+  if (warnings.length) return setStatus(warnings.join(" "), true);
+
+  const probes = resolveProbes(nodeOfPoint);
+  if (probes.length === 0) {
+    return setStatus("Add a voltage probe (PROBE tool) to choose the AC output node.", true);
+  }
+  if (!netlist.components.some((c) => c.type === "V" && c.waveform === "sine")) {
+    return setStatus("AC sweep needs a sine voltage source (its amplitude is the AC input).", true);
+  }
+
+  const fStart = parseValue(document.getElementById("ac-fstart").value);
+  const fStop = parseValue(document.getElementById("ac-fstop").value);
+  const ppd = parseValue(document.getElementById("ac-ppd").value);
+  if ([fStart, fStop, ppd].some(Number.isNaN)) {
+    return setStatus("AC: can't parse sweep parameters.", true);
+  }
+
+  try {
+    const { freqs, magDb, phaseDeg } = acSweep(netlist, {
+      fStart, fStop, pointsPerDecade: ppd,
+    });
+    showPlot(`AC sweep — ${freqs.length} points, ${formatValue(fStart, "Hz")} … ${formatValue(fStop, "Hz")}`, "bode");
+    bode.setData(
+      freqs,
+      probes.map((p) => ({
+        label: p.label, color: p.color,
+        magDb: magDb[p.node], phaseDeg: phaseDeg[p.node],
+      }))
+    );
+    setStatus(`AC sweep solved (${freqs.length} frequency points).`);
+  } catch (err) {
+    setStatus(err.message, true);
+  }
 });
 
 /* ---------------- save / load / clear ---------------- */

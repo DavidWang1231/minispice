@@ -15,6 +15,7 @@
 
 import { dcOperatingPoint } from "../js/engine/dc.js";
 import { transientAnalysis } from "../js/engine/transient.js";
+import { acSweep } from "../js/engine/ac.js";
 import { SingularMatrixError } from "../js/engine/solver.js";
 
 /**
@@ -197,6 +198,39 @@ export function runEngineTests() {
     assertClose(crossings.length >= 2 ? 1 : 0, 1, 0, "RLC: circuit actually rings");
     const measured = crossings[1] - crossings[0];
     assertClose(measured, Td, Td * 0.01, "RLC: ringing period = 2π/ω_d (±1%)");
+  });
+
+  // ------------------------------------------------------------------
+  // Test 6 — RC lowpass AC: −3 dB and −45° at f_c = 1/(2πRC).
+  //
+  //   1 V sine → R = 1 kΩ → node 2 → C = 100 nF → ground.
+  //   H(jω) = 1 / (1 + jωRC), f_c = 1/(2π·10⁻⁴) = 1591.55 Hz.
+  //   At f_c:   |H| = 1/√2  →  20·log10(1/√2) = −3.0103 dB, phase −45°.
+  //   At 10f_c: |H| = 1/√101 → −20.0432 dB, phase −84.29° (−20 dB/decade).
+  //
+  //   We start the sweep exactly at f_c so the first sample needs no
+  //   interpolation; one decade at 10 pts/decade puts 10·f_c at the end.
+  // ------------------------------------------------------------------
+  guard("RC lowpass AC sweep", () => {
+    const net = {
+      nodeCount: 2,
+      components: [
+        { id: "V1", type: "V", value: 1, waveform: "sine", amplitude: 1, freq: 1000, nodes: [1, 0] },
+        { id: "R1", type: "R", value: 1000, nodes: [1, 2] },
+        { id: "C1", type: "C", value: 1e-7, nodes: [2, 0] },
+      ],
+    };
+    const fc = 1 / (2 * Math.PI * 1000 * 1e-7);
+    const { freqs, magDb, phaseDeg } = acSweep(net, {
+      fStart: fc, fStop: 10 * fc, pointsPerDecade: 10,
+    });
+    assertClose(magDb[2][0], 20 * Math.log10(1 / Math.SQRT2), 1e-6, "AC: |H(f_c)| = −3.01 dB");
+    assertClose(phaseDeg[2][0], -45, 1e-6, "AC: ∠H(f_c) = −45°");
+    const last = freqs.length - 1;
+    assertClose(magDb[2][last], -10 * Math.log10(101), 1e-6, "AC: |H(10·f_c)| = −20.04 dB");
+    assertClose(phaseDeg[2][last], (-Math.atan(10) * 180) / Math.PI, 1e-6, "AC: ∠H(10·f_c) = −84.29°");
+    // the input node is driven directly: 0 dB, 0° at every point
+    assertClose(magDb[1][0], 0, 1e-9, "AC: input node = 0 dB");
   });
 
   // ------------------------------------------------------------------

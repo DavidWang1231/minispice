@@ -204,7 +204,8 @@ main {
 }
 
 #plot-wrap { flex: 1; min-height: 0; position: relative; }
-#plot { display: block; }
+#plot-wrap canvas { position: absolute; inset: 0; }
+#plot-wrap canvas[hidden] { display: none; }
 
 /* ---------------- status bar ---------------- */
 
