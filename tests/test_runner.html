@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MiniSpice — engine tests</title>
+  <style>
+    /* Minimal PCB-flavored styling; the real theme lives in css/style.css. */
+    body {
+      background: #0a3d2c;
+      color: #d8e6de;
+      font-family: "SF Mono", "Fira Mono", Menlo, Consolas, monospace;
+      padding: 2rem;
+    }
+    h1 { color: #d4af37; font-size: 1.2rem; }
+    table { border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #1c5a44; padding: 0.35rem 0.8rem; text-align: left; }
+    th { color: #c87533; }
+    .pass { color: #7ddf9a; }
+    .fail { color: #ff6b6b; font-weight: bold; }
+    #summary { margin-top: 1rem; font-size: 1.1rem; }
+    td.num { text-align: right; }
+  </style>
+</head>
+<body>
+  <h1>MiniSpice engine tests</h1>
+  <p>Zero-framework test page. Serve this repo over HTTP (e.g.
+     <code>python3 -m http.server</code>) — ES modules do not load from
+     <code>file://</code>.</p>
+  <table id="results">
+    <thead>
+      <tr><th>status</th><th>test</th><th>actual</th><th>expected</th><th>tol</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="summary"></div>
+
+  <script type="module">
+    import { runEngineTests } from "./engine_tests.js";
+
+    const fmt = (x) =>
+      x === undefined ? "" :
+      typeof x === "number" ? Number(x.toPrecision(6)).toString() : String(x);
+
+    const tbody = document.querySelector("#results tbody");
+    const results = runEngineTests();
+    let passed = 0;
+
+    for (const r of results) {
+      if (r.pass) passed++;
+      const tr = document.createElement("tr");
+      const cells = [
+        [r.pass ? "PASS" : "FAIL", r.pass ? "pass" : "fail"],
+        [r.name + (r.error ? ` — ${r.error}` : ""), ""],
+        [fmt(r.actual), "num"],
+        [fmt(r.expected), "num"],
+        [fmt(r.tol), "num"],
+      ];
+      for (const [text, cls] of cells) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        if (cls) td.className = cls;
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+
+    const summary = document.getElementById("summary");
+    summary.textContent = `${passed} / ${results.length} assertions passed`;
+    summary.className = passed === results.length ? "pass" : "fail";
+  </script>
+</body>
+</html>
