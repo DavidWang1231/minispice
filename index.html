@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MiniSpice — browser circuit simulator</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Mini<span class="gold">Spice</span></h1>
+    <p class="tagline">analog circuit simulator · modified nodal analysis · zero dependencies</p>
+  </header>
+
+  <main>
+    <!-- component / tool palette -->
+    <nav id="toolbar">
+      <div class="tool-group" id="tools">
+        <button data-tool="select" class="active" title="Select / move (Esc)">SEL</button>
+        <button data-tool="wire" title="Draw wires (drag)">WIRE</button>
+        <button data-tool="probe" title="Add voltage probe (click a node)">PROBE</button>
+      </div>
+      <div class="tool-group" id="parts">
+        <button data-tool="place:R" title="Resistor">R</button>
+        <button data-tool="place:C" title="Capacitor">C</button>
+        <button data-tool="place:L" title="Inductor">L</button>
+        <button data-tool="place:V" title="Voltage source">V</button>
+        <button data-tool="place:I" title="Current source">I</button>
+        <button data-tool="place:OPAMP" title="Ideal op-amp">OP</button>
+        <button data-tool="place:GND" title="Ground">GND</button>
+      </div>
+      <div class="tool-group hint">
+        <p>R&nbsp;rotate</p>
+        <p>Del&nbsp;delete</p>
+        <p>dbl-click&nbsp;edit</p>
+        <p>drag pin&nbsp;wire</p>
+      </div>
+    </nav>
+
+    <!-- schematic canvas -->
+    <section id="canvas-wrap">
+      <canvas id="schematic"></canvas>
+    </section>
+
+    <!-- analysis controls + results -->
+    <aside id="sidebar">
+      <section class="panel">
+        <h2>Circuit</h2>
+        <div class="button-row">
+          <button id="btn-save">Save .json</button>
+          <button id="btn-load">Load .json</button>
+          <button id="btn-clear">Clear</button>
+        </div>
+        <label>Examples
+          <select id="examples"><option value="">— preset circuits —</option></select>
+        </label>
+        <input type="file" id="file-input" accept=".json" hidden />
+      </section>
+
+      <section class="panel">
+        <h2>DC operating point</h2>
+        <button id="btn-dc" class="run">Run DC</button>
+        <div id="dc-results" class="results"></div>
+      </section>
+
+      <section class="panel" id="panel-tran">
+        <h2>Transient</h2>
+        <label>Stop time (s) <input id="tran-tstop" value="5m" /></label>
+        <label>Time step (s) <input id="tran-dt" value="" placeholder="auto = tstop/1000" /></label>
+        <label>Method
+          <select id="tran-method">
+            <option value="be">backward Euler</option>
+            <option value="trap">trapezoidal</option>
+          </select>
+        </label>
+        <button id="btn-tran" class="run">Run transient</button>
+      </section>
+
+      <section class="panel" id="panel-ac">
+        <h2>AC sweep</h2>
+        <label>Start (Hz) <input id="ac-fstart" value="10" /></label>
+        <label>Stop (Hz) <input id="ac-fstop" value="1Meg" /></label>
+        <label>Points/decade <input id="ac-ppd" value="10" /></label>
+        <button id="btn-ac" class="run">Run AC</button>
+      </section>
+    </aside>
+  </main>
+
+  <!-- waveform / bode plots appear here after a run -->
+  <section id="plot-panel" hidden>
+    <div class="plot-header">
+      <h2 id="plot-title">Waveforms</h2>
+      <button id="btn-close-plot">×</button>
+    </div>
+    <div id="plot-wrap">
+      <canvas id="plot"></canvas>
+    </div>
+  </section>
+
+  <footer id="status">ready — place components, wire them up, hit Run</footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

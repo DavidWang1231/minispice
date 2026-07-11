@@ -1,0 +1,259 @@
+/* MiniSpice — PCB aesthetic.
+ * Soldermask green board, copper traces, ENIG gold accents, silkscreen text.
+ * Palette must stay in sync with STYLE in js/editor/schematic.js. */
+
+:root {
+  --board: #0a3d2c;        /* soldermask green (dark) */
+  --board-deep: #072b1f;   /* darker: page chrome */
+  --board-light: #0e4a36;  /* raised panels */
+  --trace: #1c5a44;        /* faint copper-under-mask lines */
+  --copper: #c87533;
+  --copper-bright: #e8965a;
+  --gold: #d4af37;         /* ENIG pads */
+  --silk: #d8e6de;         /* silkscreen white-ish */
+  --error: #ff6b6b;
+  --ok: #7ddf9a;
+  --mono: ui-monospace, "SF Mono", "Fira Mono", Menlo, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--board-deep);
+  color: var(--silk);
+  font-family: var(--mono);
+  font-size: 14px;
+}
+
+/* ---------------- header ---------------- */
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem 1.2rem;
+  border-bottom: 2px solid var(--copper);
+}
+
+header h1 { font-size: 1.3rem; letter-spacing: 0.05em; color: var(--copper); }
+header .gold { color: var(--gold); }
+header .tagline { color: var(--silk); opacity: 0.6; font-size: 0.78rem; }
+
+/* ---------------- layout ---------------- */
+
+main {
+  flex: 1;
+  display: flex;
+  min-height: 0; /* let children shrink; canvas fills what's left */
+}
+
+/* ---------------- toolbar ---------------- */
+
+#toolbar {
+  width: 76px;
+  background: var(--board-deep);
+  border-right: 1px solid var(--trace);
+  padding: 0.6rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tool-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+#toolbar button {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 0.45rem 0;
+  background: var(--board-light);
+  color: var(--copper-bright);
+  border: 1px solid var(--trace);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#toolbar button:hover { border-color: var(--copper); color: var(--gold); }
+#toolbar button.active {
+  background: var(--copper);
+  color: var(--board-deep);
+  border-color: var(--gold);
+  font-weight: bold;
+}
+
+.hint p { font-size: 0.62rem; opacity: 0.45; line-height: 1.7; }
+
+/* ---------------- canvas ---------------- */
+
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  background: var(--board);
+  min-width: 0;
+}
+
+#schematic { display: block; cursor: crosshair; }
+
+/* ---------------- sidebar ---------------- */
+
+#sidebar {
+  width: 250px;
+  background: var(--board-deep);
+  border-left: 1px solid var(--trace);
+  padding: 0.8rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--board-light);
+  border: 1px solid var(--trace);
+  border-radius: 4px;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.panel h2 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  border-bottom: 1px solid var(--trace);
+  padding-bottom: 0.3rem;
+}
+
+.panel label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--silk);
+}
+
+.panel input, .panel select {
+  width: 100px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  background: var(--board-deep);
+  color: var(--copper-bright);
+  border: 1px solid var(--trace);
+  border-radius: 3px;
+  padding: 0.25rem 0.4rem;
+}
+
+.panel input:focus, .panel select:focus { outline: none; border-color: var(--gold); }
+
+.panel button, .prop-editor button {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--board-deep);
+  color: var(--copper-bright);
+  border: 1px solid var(--copper);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.panel button:hover, .prop-editor button:hover { color: var(--gold); border-color: var(--gold); }
+
+.panel button.run {
+  background: var(--copper);
+  color: var(--board-deep);
+  font-weight: bold;
+}
+.panel button.run:hover { background: var(--copper-bright); color: var(--board-deep); }
+
+.button-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.results { font-size: 0.75rem; line-height: 1.7; }
+.results table { border-collapse: collapse; width: 100%; }
+.results td { padding: 0.1rem 0.3rem; border-bottom: 1px solid var(--trace); }
+.results td:last-child { text-align: right; color: var(--gold); }
+
+/* ---------------- plot panel ---------------- */
+
+#plot-panel[hidden] { display: none; } /* display:flex below would defeat [hidden] */
+
+#plot-panel {
+  height: 300px;
+  border-top: 2px solid var(--copper);
+  background: var(--board);
+  display: flex;
+  flex-direction: column;
+}
+
+.plot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 1rem;
+}
+
+.plot-header h2 { font-size: 0.8rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; }
+.plot-header button {
+  background: none; border: none; color: var(--copper-bright);
+  font-size: 1.1rem; cursor: pointer; font-family: var(--mono);
+}
+
+#plot-wrap { flex: 1; min-height: 0; position: relative; }
+#plot { display: block; }
+
+/* ---------------- status bar ---------------- */
+
+#status {
+  padding: 0.35rem 1.2rem;
+  font-size: 0.75rem;
+  background: var(--board-deep);
+  border-top: 1px solid var(--trace);
+  color: var(--ok);
+  min-height: 1.8em;
+}
+
+#status.error { color: var(--error); }
+
+/* ---------------- floating property editor ---------------- */
+
+.prop-editor {
+  position: absolute;
+  z-index: 10;
+  background: var(--board-deep);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 0.7rem;
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+
+.prop-editor .prop-title { color: var(--gold); font-size: 0.8rem; }
+
+.prop-editor label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  margin-top: 0.35rem;
+}
+
+.prop-editor input, .prop-editor select {
+  width: 105px;
+  font-family: var(--mono);
+  background: var(--board-light);
+  color: var(--copper-bright);
+  border: 1px solid var(--trace);
+  border-radius: 3px;
+  padding: 0.2rem 0.4rem;
+}
+
+.prop-buttons { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.3rem; }
