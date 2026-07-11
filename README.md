@@ -10,8 +10,11 @@ dependencies** — vanilla HTML/CSS/JS, deployable to GitHub Pages as-is.
 > a tutorial, every analysis explains its own math, and `tests/` verifies
 > the simulator against hand-calculated analytical answers.
 
-<!-- TODO(david): screenshot — schematic editor with DC annotations -->
-<!-- TODO(david): GIF — drawing an RC filter and running the Bode plot -->
+![Schematic editor with DC operating-point annotations](docs/screenshot-dc.png)
+
+| Transient — inverting op-amp (gain −10) | AC sweep — Sallen-Key lowpass Bode plot |
+|---|---|
+| ![Transient waveforms](docs/screenshot-transient.png) | ![Bode plot with −3 dB marker](docs/screenshot-bode.png) |
 
 ## Try it
 
